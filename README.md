@@ -2,7 +2,7 @@
 
 For every project I keep a file in the repo that logs every time the AI got something wrong. This
 is that file: the format, a template, the instructions that let an agent maintain it as a side
-effect of its own work, and the one example from [the post that describes it](POST_URL).
+effect of its own work, and one worked example.
 
 The point is not the log. It is that once the mistakes sit next to each other you stop fixing
 instances and start fixing classes, and each class tells you which kind of guard to build next.
@@ -78,8 +78,7 @@ and once they sat next to each other the rule was obvious, which is the whole ar
 example.
 
 That log is private and stays in the project it describes. What is here is the format and one
-example. The reasoning, and the question I would ask any team running agents, is in
-[the post](POST_URL).
+example.
 
 ## Contribute an example
 
@@ -101,8 +100,6 @@ written for you.
   because the model improved or because you built a gate. It is optional in contributed examples,
   so the collection says what goes wrong and how it was caught, not which models still do it.
 - Not a benchmark and not a ranking. The `model` field is data, not a verdict.
-- None of this is new: defect classification, corrective-action practice and blameless postmortems
-  got here first. What is small enough to be new is a format an agent keeps for itself.
 
 ## Adopt
 
