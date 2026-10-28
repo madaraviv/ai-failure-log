@@ -1,6 +1,2 @@
 __pycache__/
 *.pyc
-
-# a contributor's local denylist of real names, never committed
-my-names.txt
-denylist*.txt

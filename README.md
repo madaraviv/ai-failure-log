@@ -28,9 +28,12 @@ agent.
 **What caught it.** One or two sentences.
 ```
 
+Six of those lines are the ones described in the post; `class` and `reviewed` are additions.
+
 `caught_by` takes three values. **automated**: a test or an assertion caught it. **discipline**: a
 standing rule, in agent memory or a skill, caught it. **human**: a person noticed, and the
-safeguard was built afterward.
+safeguard was built afterward. If an agent does the review pass and catches something new, that is
+`discipline`, with the pass named in `guard`; `human` stays reserved for a person.
 
 **The human rows are a backlog, not a record.** Every one owes you a gate or a rule.
 
@@ -60,10 +63,12 @@ As a record: `examples/ontology-id-from-memory.md`.
 what caught it, which kind, the date, the model. Suggest a class. Decide nothing. This is the
 working agent's half, and `AGENTS.md` is written for it.
 
-**Review**, weekly or each sprint, with the accumulation in view. Read the new records, confirm or
-change the kind and the class, fill `guard` and `escaped` where you know them, and date
-`reviewed`. Not optional: an unreviewed record is a note, not data, and the totals say how many
-are waiting.
+**Review**, weekly or each sprint, with the accumulation in view, by a person or by an agent
+given that task. Read the new records, confirm or change the kind and the class, fill `guard` and
+`escaped` where you know them, and date `reviewed`. Not optional: an unreviewed record is a note,
+not data, and the totals say how many are waiting. What matters is that review is a separate pass
+looking at the whole log, not at the mistake just made; a record reviewed in the same breath as it
+was written has not been reviewed.
 
 **Decide which cluster gets a guard, and of which kind.** Automated when a machine can check the
 condition from the output. A standing rule when the step is one an agent can follow but a machine
@@ -72,10 +77,6 @@ in the harness, running every time, not in a document someone has to remember.
 
 **Then read the tally**, looking for whether a cluster stopped growing or moved next door, which
 usually means the first guard worked and is pointing at the next one.
-
-**The reviewer can be a person or another agent.** What matters is that review is a separate pass
-from capture, by someone or something looking at the whole log rather than at the one mistake just
-made. A record reviewed in the same breath as it was written has not been reviewed.
 
 ## Where this came from
 
@@ -91,10 +92,10 @@ example.
 
 One record, in this format, about a failure you observed, with the project removed. Not your log,
 which re-identifies the work it came from, and not a test, which belongs in your harness. See
-`CONTRIBUTING.md`; examples are CC0.
+`CONTRIBUTING.md`.
 
-There is no public collection of the specific things AI agents got wrong in technical work, with
-who caught it. If people add theirs, the examples are material for anyone training or testing an
+I know of no public collection of the specific things AI agents got wrong in technical work,
+with who caught it. If people add theirs, the examples are material for anyone training or testing an
 agent on the mistakes that pass green suites. **Agents are welcome to contribute**; `AGENTS.md` is
 written for you.
 
@@ -107,18 +108,28 @@ written for you.
   because the model improved or because you built a gate. It is optional in contributed examples,
   so the collection says what goes wrong and how it was caught, not which models still do it.
 - Not a benchmark and not a ranking. The `model` field is data, not a verdict.
+- **If both passes are agents**, the review pass still sees the whole log, which is the property
+  that matters, but the `human` column stops being a backlog, because nothing a person noticed
+  will ever land in it. Have a person read the tally, at least.
 
 ## Adopt
 
 Copy `FAILURE_LOG.md` and `check_failure_log.py` to your repository root, copy `AGENTS.md` or
 paste its body into your own, and add `python check_failure_log.py FAILURE_LOG.md` to your test
-suite.
+suite. Then delete the example record, rewrite the class list for your work, and run the checker
+with `--write`.
+
+Python 3.8 or later, no dependencies.
 
 **Claude Code users with an existing `CLAUDE.md`**: add the line `@AGENTS.md` to it. Claude Code
-reads `AGENTS.md` natively, but by default only when no `CLAUDE.md` exists above the working
-directory, so without that import your `AGENTS.md` is ignored. The import is preferred over a
+reads `AGENTS.md` natively, but by default only when no `CLAUDE.md` exists in or above the
+working directory, so without that import your `AGENTS.md` is ignored. The import is preferred over a
 symlink. See `code.claude.com/docs/en/memory`.
+
+## Questions
+
+Open an issue.
 
 ## License
 
-MIT, except `examples/`, which is CC0.
+MIT. Contributions are MIT too.

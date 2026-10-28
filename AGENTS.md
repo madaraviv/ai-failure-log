@@ -23,7 +23,7 @@ Append to the end of `FAILURE_LOG.md`:
 - date: YYYY-MM-DD
 - caught_by: automated | discipline | human
 - model: <exactly as your tooling reports it; blank if unknown>
-- class: <a class from the list above, your own, or unclassified>
+- class: <a class from the list in the template, your own, or unclassified>
 - guard: <free text: which guard caught it; may be empty>
 - escaped: <free text: which guard should have caught it and did not; may be empty>
 - reviewed: <blank; the reviewer fills this>
@@ -59,3 +59,7 @@ Your job here is to record accurately and decide nothing.
 You may be asked to do the review pass as a separate task, and that is a legitimate use of an
 agent. If so, read every unreviewed record together rather than one at a time, and say what you
 changed. A record reviewed in the same breath as it was written has not been reviewed.
+
+If the review pass is yours and it catches something new, that record's `caught_by` is
+`discipline`, with the review pass named in `guard`. `human` is reserved for a failure a person
+noticed.

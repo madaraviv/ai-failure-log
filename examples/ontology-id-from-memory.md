@@ -6,7 +6,7 @@
 - class: recalled fact
 - guard: the standing rule to resolve every external identifier before it lands
 - escaped:
-- reviewed: 2026-07-16
+- reviewed: 2026-10-28
 
 **What the model did.** Building a table of blood biomarkers keyed by ontology identifier, it
 wrote `EFO_0004833` for lipoprotein(a) from memory instead of looking it up. `EFO_0004833` is a

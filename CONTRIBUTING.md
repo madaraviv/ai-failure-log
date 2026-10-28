@@ -6,8 +6,8 @@ Send **one record, in the log's format, about a failure you observed, with the p
 It lives at `examples/<slug>.md`.
 
 Not your log: the story in a log re-identifies the work it came from. Not a test: that belongs in
-your harness. One record, the way the post asks it — one specific thing, and who caught it
-instead.
+your harness. One record, the way the LinkedIn post this repository accompanies asks for it: one
+specific thing, and who caught it instead.
 
 The floor:
 
@@ -18,7 +18,7 @@ The floor:
   wrong" is not an example; the citation it wrote is.
 - **What caught it** says what exposed it, and where you know it, why it passed unnoticed until
   then.
-- Under 150 words. No names, handles, hostnames, paths, tickets, customer or project names, or
+- The two paragraphs together under 150 words. No names, handles, hostnames, paths, tickets, customer or project names, or
   identifiers from restricted data. If the artifact alone would identify your programme,
   generalize it or do not send it. Dates to the month if you prefer.
 - It really happened. `python check_failure_log.py examples/<slug>.md --scrub-check` is clean. A
@@ -32,12 +32,12 @@ Checklist for the pull request:
 - [ ] It really happened; it is not constructed to illustrate a point.
 - [ ] I agree to the terms below. If I contribute for an employer, they have agreed.
 
-**What you agree to.** You are placing the file in the public domain under CC0. Anyone may copy
-it, change it, combine it with others, and use it for any purpose, including training and
-evaluating AI systems, without asking you and without crediting you. You confirm you have the
-right to share it, that it contains nothing confidential and no one's personal data, and that it
-describes something that really happened. Once merged this cannot be undone; we will remove a file
-if you ask, but copies and git history persist.
+**What you agree to.** Your contribution is licensed under this repository's MIT license, so
+anyone may copy it, change it, combine it with others, and use it for any purpose, including
+training and evaluating AI systems. You confirm you have the right to share it, that it contains
+nothing confidential and no one's personal data, and that it describes something that really
+happened. Once merged this cannot be undone; we will remove a file if you ask, but copies and git
+history persist.
 
 ## A class
 

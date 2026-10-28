@@ -6,21 +6,24 @@ existing one. Run `python check_failure_log.py FAILURE_LOG.md --write` after app
 This records **caught** failures only. A class going quiet is evidence about this team's catching
 and recording, never proof the failure stopped.
 
+`reviewed` is dated in a later pass, with the whole log in view, by a person or by an agent given
+that task. A record reviewed in the same breath as it was written has not been reviewed.
+
 ## Classes
 
 Starting suggestions only. Every team bins differently and prioritizes differently; rewrite this
 list for your work. Nothing checks it. A class is a name for a cluster you have seen more than
 once, and nothing more.
 
-- **recalled fact** — an external fact stated from memory instead of looked up
-- **trusted your own record** — a fact about your system read from a document instead of the system
-- **overgeneralized** — a measurement narrower than the claim built on it
-- **diagnosis before measurement** — a causal story asserted before the measurement that could refute it
-- **partial sweep** — a fix applied to the reported instance while a sibling kept the defect
-- **green but unconstrained** — a check that passed without constraining what it was read as proving
-- **built but unwired** — code present but never reached at runtime, tests green
-- **wrong inference from a clean run** — a correct run and a conclusion that does not follow
-- **substituted answer** — the output answers a neighboring question, or a subset, without saying so
+- **recalled fact**: an external fact stated from memory instead of looked up
+- **trusted your own record**: a fact about your system read from a document instead of the system
+- **overgeneralized**: a measurement narrower than the claim built on it
+- **diagnosis before measurement**: a causal story asserted before the measurement that could refute it
+- **partial sweep**: a fix applied to the reported instance while a sibling kept the defect
+- **green but unconstrained**: a check that passed without constraining what it was read as proving
+- **built but unwired**: code present but never reached at runtime, tests green
+- **wrong inference from a clean run**: a correct run and a conclusion that does not follow
+- **substituted answer**: the output answers a neighboring question, or a subset, without saying so
 
 ## Totals
 
@@ -58,7 +61,7 @@ unreviewed: 0
 - class: recalled fact
 - guard: the standing rule to resolve every external identifier before it lands
 - escaped:
-- reviewed: 2026-07-16
+- reviewed: 2026-10-28
 
 **What the model did.** Building a table of blood biomarkers keyed by ontology identifier, it
 wrote `EFO_0004833` for lipoprotein(a) from memory instead of looking it up. `EFO_0004833` is a

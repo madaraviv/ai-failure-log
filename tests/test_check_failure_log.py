@@ -3,7 +3,9 @@
     python -m unittest discover -s tests
 """
 import pathlib
+import shutil
 import sys
+import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -30,8 +32,21 @@ class TheTemplateIsValid(unittest.TestCase):
 
     def test_the_example_file_is_the_same_record(self):
         ex = (ROOT / "examples/ontology-id-from-memory.md").read_text(encoding="utf-8")
-        self.assertIn("20260716-ontology-id-from-memory", ex)
+        in_template = GOOD.split("## Log\n", 1)[1].strip()
+        self.assertEqual(ex.strip(), in_template, "the example and the template record drifted")
         self.assertEqual(c.scrub(ex), [])
+
+    def test_a_bare_record_file_is_format_checked(self):
+        ex = (ROOT / "examples/ontology-id-from-memory.md").read_text(encoding="utf-8")
+        self.assertEqual(c.check(ex), [], "a contributed record must be checkable on its own")
+        self.assertTrue(c.check(ex.replace("- caught_by: discipline", "- caught_by: nobody")))
+
+    def test_the_shipped_example_is_not_reviewed_the_day_it_was_written(self):
+        rec = c.parse(GOOD)[0]
+        self.assertNotEqual(
+            rec["date"], rec["reviewed"],
+            "the record every adopter copies must not show same-breath review",
+        )
 
 
 class EachCheckFires(unittest.TestCase):
@@ -61,10 +76,10 @@ class EachCheckFires(unittest.TestCase):
         self.fires(mutate("- date: 2026-07-16", "- date: 16/07/2026"), "not ISO")
 
     def test_a_non_iso_reviewed_date(self):
-        self.fires(mutate("- reviewed: 2026-07-16", "- reviewed: last week"), "not ISO")
+        self.fires(mutate("- reviewed: 2026-10-28", "- reviewed: last week"), "not ISO")
 
     def test_a_blank_reviewed_is_allowed_and_counted(self):
-        text = mutate("- reviewed: 2026-07-16", "- reviewed:")
+        text = mutate("- reviewed: 2026-10-28", "- reviewed:")
         self.assertIn("unreviewed: 1", c.totals(c.parse(text)))
 
     def test_an_id_that_disagrees_with_its_date(self):
@@ -86,11 +101,46 @@ class EachCheckFires(unittest.TestCase):
         self.fires(GOOD.split("## Log")[0] + "## Log\n", "no records found")
 
 
+class TheCommandLine(unittest.TestCase):
+    """--write is the command every adopter runs, so it gets a test."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.path = pathlib.Path(self.dir) / "FAILURE_LOG.md"
+        shutil.copy(ROOT / "FAILURE_LOG.md", self.path)
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def test_write_regenerates_the_tally_after_an_append(self):
+        extra = (
+            "\n\n### 20261028-a-second-record · another\n\n"
+            "- date: 2026-10-28\n- caught_by: human\n- model:\n- class: unclassified\n"
+            "- guard:\n- escaped:\n- reviewed:\n\n"
+            "**What the model did.** x\n\n**What caught it.** y\n"
+        )
+        with open(self.path, "a", encoding="utf-8") as fh:
+            fh.write(extra)
+        self.assertTrue(c.check(self.path.read_text(encoding="utf-8")), "tally should be stale")
+        self.assertEqual(c.main([str(self.path), "--write"]), 0)
+        after = self.path.read_text(encoding="utf-8")
+        self.assertEqual(c.check(after), [])
+        self.assertIn("**2 records.**", after)
+        self.assertIn("(not recorded)", after)
+        self.assertIn("unreviewed: 1", after)
+
+    def test_scrub_check_exits_nonzero_on_a_leak(self):
+        self.path.write_text("### x\n\nmail a@b.com\n", encoding="utf-8")
+        self.assertEqual(c.main([str(self.path), "--scrub-check"]), 1)
+
+
 class TheScrubCheckFires(unittest.TestCase):
     def test_it_finds_what_should_not_be_published(self):
-        text = "mail a@b.com, host 10.0.0.4, path /Users/someone/x, s3://bucket/key"
+        text = ("mail a@b.com, host 10.0.0.4, path /Users/someone/x, s3://bucket/key, "
+                "token " + "a1b2c3d4" * 4)
         found = " ".join(c.scrub(text))
-        for needle in ("email", "IP address", "path with a username", "cloud resource id"):
+        for needle in ("email", "IP address", "path with a username", "cloud resource id",
+                       "credential-shaped"):
             self.assertIn(needle, found, f"{needle} missed in: {found}")
 
     def test_the_template_is_clean(self):

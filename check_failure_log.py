@@ -3,7 +3,10 @@
 
     python check_failure_log.py FAILURE_LOG.md            # check; exit 1 on a problem
     python check_failure_log.py FAILURE_LOG.md --write     # regenerate the totals, then check
-    python check_failure_log.py examples/x.md --scrub-check # look for things not to publish
+    python check_failure_log.py examples/x.md --scrub-check # also checks the format
+
+A file with no "## Log" heading, such as a single contributed record, is read as one
+record on its own.
 
 Standard library only. Wire the plain form into your test suite.
 
@@ -19,7 +22,7 @@ from collections import Counter
 
 CAUGHT_BY = ("automated", "discipline", "human")
 KEYS = ("date", "caught_by", "model", "class", "guard", "escaped", "reviewed")
-MUST_HAVE_A_VALUE = ("date", "caught_by")
+MUST_HAVE_A_VALUE = ("date", "caught_by", "class")
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 REC_ID = re.compile(r"^\d{8}-[a-z0-9]+(?:-[a-z0-9]+)*$")
 HEADING = re.compile(r"^###\s+(?P<id>[^\s·|]+)")
@@ -38,7 +41,8 @@ LEAKS = [
 
 def parse(text):
     """Records are '### <id>' blocks under '## Log', each with '- key: value' lines."""
-    records, cur, in_log = [], None, False
+    # a file with no "## Log" heading is a bare record, e.g. one contributed example
+    records, cur, in_log = [], None, "## Log" not in text
     for line in text.splitlines():
         if line.startswith("## "):
             in_log = line[3:].strip().lower() == "log"
@@ -79,16 +83,20 @@ def check(text):
         return ["no records found: expected '## Log' with '### <id>' records under it"]
     for rid, k in Counter(r["id"] for r in records).items():
         if k > 1:
-            problems.append(f"id {rid!r} is used by {k} records; ids are keys")
+            problems.append(f"id {rid!r} is used by {k} records; ids are keys, renumber the later one")
     for r in records:
         rid = r["id"]
         if not REC_ID.match(rid):
-            problems.append(f"{rid}: id must look like 20260716-short-slug")
+            problems.append(
+                f"{rid}: id must look like 20260716-short-slug. Note that every '###' heading "
+                "under '## Log' is read as a record"
+            )
         for key in KEYS:
             if key not in r:
                 problems.append(f"{rid}: missing the {key!r} line (the value may be blank)")
             elif key in MUST_HAVE_A_VALUE and not r[key]:
-                problems.append(f"{rid}: {key!r} is blank and must have a value")
+                hint = "; write 'unclassified' if you do not know" if key == "class" else ""
+                problems.append(f"{rid}: {key!r} is blank and must have a value{hint}")
         for para in ("What the model did", "What caught it"):
             if para not in r["paragraphs"]:
                 problems.append(f"{rid}: missing the **{para}.** paragraph")
@@ -102,6 +110,8 @@ def check(text):
                 f"{rid}: caught_by is {r['caught_by']!r}; it is exactly one of {CAUGHT_BY} with "
                 "nothing else in the cell. Put the safeguard in 'guard'"
             )
+    if "## Log" not in text:          # a bare record file keeps no tally
+        return problems
     want, start, end = totals(records), text.find(BEGIN), text.find(END)
     if start == -1 or end == -1:
         problems.append(f"no totals block: add {BEGIN} and {END}")
@@ -122,14 +132,13 @@ def main(argv):
         return 0
     path = argv[0]
     text = open(path, encoding="utf-8").read()
+    leaks = scrub(text) if "--scrub-check" in argv else []
     if "--scrub-check" in argv:
-        found = scrub(text)
-        for f in found:
+        for f in leaks:
             print(f"{path}: REMOVE {f}")
-        print(f"{path}: {len(found)} to remove. This finds strings with a recognizable shape. It "
+        print(f"{path}: {len(leaks)} to remove. This finds strings with a recognizable shape. It "
               "cannot tell that a sentence describes a customer without naming them, so have "
               "someone else read it too.")
-        return 1 if found else 0
     if "--write" in argv:
         start, end = text.find(BEGIN), text.find(END)
         if start == -1 or end == -1:
@@ -142,7 +151,7 @@ def main(argv):
     for p in problems:
         print(f"{path}: {p}")
     print(f"{path}: {'OK' if not problems else f'{len(problems)} problem(s)'}")
-    return 1 if problems else 0
+    return 1 if problems or leaks else 0
 
 
 if __name__ == "__main__":
