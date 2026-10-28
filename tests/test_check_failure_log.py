@@ -145,37 +145,6 @@ class EachCheckFires(unittest.TestCase):
         self.fires(GOOD.split("## Log")[0] + "## Log\n", "no records found")
 
 
-class TheContributionFloorFires(unittest.TestCase):
-    """The acceptance bar for a log contributed under shared-logs/."""
-
-    def test_the_template_alone_is_too_short_to_be_contributed(self):
-        found = c.contribution_floor(GOOD)
-        self.assertTrue(any("at least 10" in p for p in found), found)
-
-    def test_a_missing_cc0_header_is_caught(self):
-        self.assertTrue(any("CC0-1.0" in p for p in c.contribution_floor(GOOD)))
-
-    def test_too_many_unclassified_records_are_caught(self):
-        body = GOOD.split("## Log")[1]
-        many = GOOD + "".join(
-            body.replace("20260716-ontology-id-from-memory", f"2026071{i}-filler-{i}")
-                .replace("- date: 2026-07-16", f"- date: 2026-07-1{i}")
-                .replace("- shape: recalled-fact", "- shape: unclassified")
-            for i in range(10)
-        ) + "\nlicense: CC0-1.0\n"
-        found = c.contribution_floor(many)
-        self.assertTrue(any("unclassified" in p for p in found), found)
-
-    def test_a_log_that_clears_the_floor_reports_nothing(self):
-        body = GOOD.split("## Log")[1]
-        ok = GOOD + "license: CC0-1.0\n" + "".join(
-            body.replace("20260716-ontology-id-from-memory", f"2026071{i}-filler-{i}")
-                .replace("- date: 2026-07-16", f"- date: 2026-07-1{i}")
-            for i in range(10)
-        )
-        self.assertEqual(c.contribution_floor(ok), [])
-
-
 class TheScrubCheckFires(unittest.TestCase):
     def hard(self, text, denylist=()):
         return c.scrub_check(text, denylist)[0]

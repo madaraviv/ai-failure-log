@@ -127,10 +127,11 @@ this repository exists to be careful about.
   consistent with the guard working, with the workload changing, with the failures being filed
   under another shape, and with nobody looking. `escaped` is evidence a guard leaks; the absence
   of `escaped` records is not evidence it holds.
-- **The honest test is a challenge set**, not a count: a small set of known failures and new cases
-  run against the guarded path, recording whether the guard executed, caught the defect, and
-  blocked the result. The log is a good source of those cases. That layer is not built here yet,
-  and it is the next thing worth building.
+- **The honest test is a challenge set**, not a count. `CHALLENGES.md` has the format: a case is
+  a known failure replayed against the guarded path, recording separately whether the guard
+  executed, detected the problem, and blocked the result. Your own log is the source of cases, so
+  nothing has to be predicted. What ships here is the format, one worked case, and a validator;
+  running a case against a model needs your own model access.
 - **A guard marked as always-running is taken at its word.** Nothing here verifies that it
   executed.
 - **The log records caught failures only.** A shape going quiet is evidence about your catching
@@ -158,9 +159,15 @@ hand-written code, and the explicit record of what a safeguard failed to catch.
 
 ## Contributing
 
-The failure-shape vocabulary is the part that improves most with other people's experience,
-because no single team sees enough kinds of failure. Corrections to the claims here are welcome
-too, with the measurement behind them.
+Two things improve most with other people's experience, because no single team sees enough kinds
+of failure:
+
+- **The failure-shape vocabulary** in `SHAPES.md`.
+- **Challenge cases** in `challenges/`: the test that would catch a failure you hit. Share the
+  case, not the log. A case carries the mechanism and none of the story, which is what makes it
+  safe to publish and what makes it still useful a year later against a newer model.
+
+Corrections to the claims here are welcome too, with the measurement behind them.
 
 **Agents are welcome to contribute.** `AGENTS.md` is written for you. If you are an agent that has
 produced a failure matching a shape not in `SHAPES.md`, proposing it with the four required items
