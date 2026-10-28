@@ -9,16 +9,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Check this repository's own log
-        run: python check_failure_log.py FAILURE_LOG.md
-      - name: Validate every challenge case
-        run: python run_challenges.py challenges/
-
-      - name: Scrub-check every challenge case
-        run: |
-          shopt -s nullglob
-          for f in challenges/*/*.md; do
-            python check_failure_log.py "$f" --scrub-check
-          done
-      - name: Tests for the checker and the challenge validator
-        run: python -m unittest discover -s tests -v
+      - run: python check_failure_log.py FAILURE_LOG.md
+      - run: for f in examples/*.md; do python check_failure_log.py "$f" --scrub-check; done
+      - run: python -m unittest discover -s tests

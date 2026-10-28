@@ -1,6 +1,4 @@
-"""One constructed failure per check, so each check is known to fire.
-
-A gate never observed failing is not known to work. Run from the repository root:
+"""One constructed failure per check. A gate never observed failing is not known to work.
 
     python -m unittest discover -s tests
 """
@@ -16,152 +14,87 @@ import check_failure_log as c  # noqa: E402
 GOOD = (ROOT / "FAILURE_LOG.md").read_text(encoding="utf-8")
 
 
-def problems(text):
-    return c.check(text)
+def mutate(old, new):
+    assert old in GOOD, f"fixture drifted; {old!r} is gone"
+    return GOOD.replace(old, new, 1)
 
 
-def problems_but_not_the_totals(text):
-    """For checks about a field's validity: changing a counted field makes the totals stale,
-    which is the totals check doing its job and not what these tests are about."""
-    return [p for p in c.check(text) if "totals block" not in p]
-
-
-def mutate(old, new, text=None):
-    text = GOOD if text is None else text
-    assert old in text, f"fixture drifted; {old!r} is no longer in the log"
-    return text.replace(old, new, 1)
+def without_totals(text):
+    """Changing a counted field makes the tally stale, which is that check working."""
+    return [p for p in c.check(text) if "totals" not in p]
 
 
 class TheTemplateIsValid(unittest.TestCase):
-    def test_the_shipped_log_passes_every_check(self):
-        self.assertEqual(problems(GOOD), [])
+    def test_it_passes(self):
+        self.assertEqual(c.check(GOOD), [])
 
-    def test_the_shipped_totals_match_the_records(self):
-        records, _, _, _ = c.parse(GOOD)
-        self.assertIn(c.totals(records).strip(), GOOD)
-
-    def test_a_title_after_the_id_is_accepted_and_the_id_is_taken_alone(self):
-        records, _, _, _ = c.parse(GOOD)
-        self.assertEqual(records[0]["id"], "20260716-ontology-id-from-memory")
-        self.assertTrue(records[0]["title"])
+    def test_the_example_file_is_the_same_record(self):
+        ex = (ROOT / "examples/ontology-id-from-memory.md").read_text(encoding="utf-8")
+        self.assertIn("20260716-ontology-id-from-memory", ex)
+        self.assertEqual(c.scrub(ex), [])
 
 
 class EachCheckFires(unittest.TestCase):
     def fires(self, text, needle):
-        found = problems(text)
-        self.assertTrue(found, "the check did not fire at all")
-        self.assertTrue(
-            any(needle in p for p in found),
-            f"fired, but not about {needle!r}: {found}",
-        )
+        found = c.check(text)
+        self.assertTrue(found, "the check did not fire")
+        self.assertTrue(any(needle in p for p in found), f"not about {needle!r}: {found}")
 
-    def test_duplicate_record_id(self):
-        dupe = GOOD + "\n\n### 20260716-ontology-id-from-memory · again\n\n" \
-            "- date: 2026-07-16\n- caught_by: human\n- guard: none-yet\n" \
-            "- shape: recalled-fact\n- model:\n\n**Failure.** x\n\n**Caught.** y\n"
-        self.fires(dupe, "must be unique")
+    def test_duplicate_id(self):
+        self.fires(GOOD + "\n" + GOOD.split("## Log\n")[1], "ids are keys")
 
     def test_caught_by_with_free_text(self):
-        self.fires(mutate("- caught_by: discipline", "- caught_by: discipline (added a test)"),
+        self.fires(mutate("- caught_by: discipline", "- caught_by: discipline (a test)"),
                    "nothing else in the cell")
 
-    def test_caught_by_outside_the_enum(self):
-        self.fires(mutate("- caught_by: discipline", "- caught_by: reviewer"),
-                   "exactly one of")
+    def test_caught_by_outside_the_three(self):
+        self.fires(mutate("- caught_by: discipline", "- caught_by: reviewer"), "exactly one of")
 
-    def test_guard_absent_from_the_guard_table(self):
-        self.fires(mutate("- guard: fetch-verify-identifier", "- guard: a-rule-i-invented"),
-                   "not in the guard table")
+    def test_a_missing_key_line(self):
+        self.fires(mutate("- escaped:\n", ""), "missing the 'escaped' line")
 
-    def test_guard_cited_before_it_landed(self):
-        self.fires(mutate("| `fetch-verify-identifier` | 2026-01-01 |",
-                          "| `fetch-verify-identifier` | 2026-09-01 |"),
-                   "only exists from")
+    def test_a_blank_date_is_rejected_but_a_blank_model_is_not(self):
+        self.fires(mutate("- date: 2026-07-16", "- date:"), "must have a value")
+        self.assertEqual(without_totals(mutate("- model: claude-opus-4-8[1m]", "- model:")), [])
 
-    def test_shape_absent_from_the_shape_table(self):
-        self.fires(mutate("- shape: recalled-fact", "- shape: a-shape-i-invented"),
-                   "not in this log's shape table")
+    def test_a_non_iso_date(self):
+        self.fires(mutate("- date: 2026-07-16", "- date: 16/07/2026"), "not ISO")
 
-    def test_unclassified_shape_is_allowed(self):
-        self.assertEqual(
-            problems_but_not_the_totals(mutate("- shape: recalled-fact", "- shape: unclassified")),
-            [],
-        )
+    def test_a_non_iso_reviewed_date(self):
+        self.fires(mutate("- reviewed: 2026-07-16", "- reviewed: last week"), "not ISO")
 
-    def test_missing_required_field(self):
-        self.fires(mutate("- shape: recalled-fact\n", ""), "missing required field")
+    def test_a_blank_reviewed_is_allowed_and_counted(self):
+        text = mutate("- reviewed: 2026-07-16", "- reviewed:")
+        self.assertIn("unreviewed: 1", c.totals(c.parse(text)))
 
-    def test_blank_model_is_allowed_but_the_key_is_required(self):
-        self.assertEqual(
-            problems_but_not_the_totals(mutate("- model: claude-opus-4-8[1m]", "- model:")), []
-        )
-        self.fires(mutate("- model: claude-opus-4-8[1m]\n", ""), "missing required field 'model'")
+    def test_an_id_that_disagrees_with_its_date(self):
+        self.fires(mutate("- date: 2026-07-16", "- date: 2026-07-17"), "does not start with")
 
-    def test_non_iso_date(self):
-        self.fires(mutate("- date: 2026-07-16", "- date: 16/07/2026"), "is not ISO")
-
-    def test_id_that_disagrees_with_its_own_date(self):
-        self.fires(mutate("- date: 2026-07-16", "- date: 2026-07-17"),
-                   "does not start with its own date")
-
-    def test_id_in_the_wrong_format(self):
+    def test_an_id_in_the_wrong_format(self):
         self.fires(mutate("### 20260716-ontology-id-from-memory", "### record-one"),
                    "id must look like")
 
-    def test_missing_failure_paragraph(self):
-        self.fires(mutate("**Failure.**", "Failure:"), "missing the **Failure.** paragraph")
+    def test_each_paragraph_is_required(self):
+        for para in ("What the model did", "What caught it"):
+            with self.subTest(para=para):
+                self.fires(mutate(f"**{para}.**", f"{para}:"), f"missing the **{para}.**")
 
-    def test_missing_caught_paragraph(self):
-        self.fires(mutate("**Caught.**", "Caught:"), "missing the **Caught.** paragraph")
+    def test_a_stale_tally(self):
+        self.fires(mutate("**1 record.**", "**99 records.**"), "do not match the records")
 
-    def test_stale_totals(self):
-        self.fires(mutate("**1 record.**", "**99 records.**"), "does not match the records")
-
-    def test_guard_that_neither_runs_always_nor_on_a_schedule(self):
-        self.fires(mutate("| discipline | always | agent instructions",
-                          "| discipline | sometimes | agent instructions"),
-                   "is not a guard")
-
-    def test_guard_with_an_unknown_kind(self):
-        self.fires(mutate("| 2026-01-01 | discipline | always | agent instructions",
-                          "| 2026-01-01 | vibes | always | agent instructions"),
-                   "not one of")
-
-    def test_duplicate_guard_id(self):
-        self.fires(mutate("| `second-os-in-ci` | 2026-01-01 | test | always |",
-                          "| `fetch-verify-identifier` | 2026-01-01 | test | always |"),
-                   "appears twice in the guard table")
-
-    def test_a_guard_id_without_back_ticks_still_resolves(self):
-        self.assertEqual(
-            problems(mutate("| `fetch-verify-identifier` |", "| fetch-verify-identifier |")), []
-        )
-
-    def test_the_escaped_key_is_required_though_its_value_may_be_empty(self):
-        self.assertEqual(problems(mutate("- escaped:", "- escaped:")), [])
-        self.fires(mutate("- escaped:\n", ""), "missing required field 'escaped'")
-
-    def test_an_empty_log_says_so(self):
+    def test_an_empty_log(self):
         self.fires(GOOD.split("## Log")[0] + "## Log\n", "no records found")
 
 
 class TheScrubCheckFires(unittest.TestCase):
-    def hard(self, text, denylist=()):
-        return c.scrub_check(text, denylist)[0]
+    def test_it_finds_what_should_not_be_published(self):
+        text = "mail a@b.com, host 10.0.0.4, path /Users/someone/x, s3://bucket/key"
+        found = " ".join(c.scrub(text))
+        for needle in ("email", "IP address", "path with a username", "cloud resource id"):
+            self.assertIn(needle, found, f"{needle} missed in: {found}")
 
-    def test_it_finds_an_email_an_ip_a_path_and_a_denylist_name(self):
-        text = "asked Someone at /Users/someone, mail a@b.com, host 10.0.0.4, client Acme Corp"
-        found = " ".join(self.hard(text, ["Acme Corp"]))
-        for needle in ("email", "IPv4", "absolute path", "denylist"):
-            self.assertIn(needle, found, f"{needle} not found in: {found}")
-
-    def test_the_shipped_template_has_no_hard_findings(self):
-        self.assertEqual(self.hard(GOOD), [])
-
-    def test_a_url_is_soft_not_hard(self):
-        text = "see https://example.com/docs"
-        self.assertEqual(self.hard(text), [])
-        self.assertTrue(c.scrub_check(text)[1])
+    def test_the_template_is_clean(self):
+        self.assertEqual(c.scrub(GOOD), [])
 
 
 if __name__ == "__main__":

@@ -1,181 +1,120 @@
-# ai-failure-loop
+# ai-failure-log
 
-**Log what an AI agent got wrong, name the guard, and work out whether the failure class actually
-stopped.**
+For every project I keep a file in the repo that logs every time the AI got something wrong. This
+is that file: the format, a template, the instructions that let an agent maintain it as a side
+effect of its own work, and the one example from [the post that describes it](POST_URL).
 
-Status: **work in progress.** The format and the checker are usable today. The measurement layer
-is not finished, and the section "What this does not do yet" says exactly where the gaps are.
-Contributions are wanted, from people and from agents.
+The point is not the log. It is that once the mistakes sit next to each other you stop fixing
+instances and start fixing classes, and each class tells you which kind of guard to build next.
+The log is kept by an agent and read by a person. Neither half works alone.
 
-## The problem
+## The record
 
-Teams running AI coding and research agents fix the same mistake more than once.
+```
+### YYYYMMDD-short-slug · one-line title
 
-The mistake is rarely a crash. It is an output shaped like the right answer: an identifier that
-resolves to the wrong thing, a test that passes without constraining the code it covers, a claim
-checked on one case and stated for all of them, an answer to a slightly different question than
-the one asked. The code is nearly right and the claim about it is wrong, so the tests stay green
-and nothing draws attention to it.
+- date: YYYY-MM-DD
+- caught_by: automated | discipline | human
+- model: <exactly as your tooling reports it; blank if unknown>
+- class: <a class from the list in the template, your own, or unclassified>
+- guard: <free text: which guard caught it; may be empty>
+- escaped: <free text: which guard should have caught it and did not; may be empty>
+- reviewed: <a person fills this>
 
-Each one gets corrected in the moment and forgotten. Nothing accumulates, so the same class
-recurs, and a team can spend a year fixing instances of a problem it never names.
+**What the model did.** The concrete artifact: the actual identifier, flag, value or sentence.
 
-Three things make a log of these failures harder than it looks:
+**What caught it.** One or two sentences.
+```
 
-- **A category named for how a failure surfaced will swallow everything.** "The tests were green"
-  describes most of them, so it stops discriminating, and then a class that genuinely stopped
-  looks identical to a class that stopped being labeled.
-- **Recording what caught each failure records only your successes.** A log of catches can never
-  show what a safeguard failed to catch, which is the only thing that says whether it works.
-- **The share of failures caught automatically moves with which test environments exist**, not
-  with how good the safeguards are. Add a second operating system to CI and the number jumps for
-  a reason that has nothing to do with the agent or the guards.
+`caught_by` takes three values. **automated**: a test or an assertion caught it. **discipline**: a
+standing rule, in agent memory or a skill, caught it. **human**: a person noticed, and the
+safeguard was built afterward.
+
+**The human rows are a backlog, not a record.** Every one owes you a gate or a rule.
+
+The template ships nine starting classes. They are suggestions; every team bins differently, so
+rewrite the list and nothing will check it. A class is a name for a cluster you have seen more
+than once.
+
+`guard` records what caught it. **`escaped` records what it got past.** Without the second you only
+ever record your successes.
+
+## The example
+
+An agent building a table of blood biomarkers keyed by ontology identifier needed the identifier
+for lipoprotein(a) and wrote `EFO_0004833` from memory instead of looking it up. `EFO_0004833` is a
+real identifier. It means "neutrophil count".
+
+A made-up identifier would have been safer, because nothing resolves it and it fails loudly. A real
+identifier for the wrong thing resolves cleanly, validates, passes CI, and prints a correct-looking
+label. The table was keyed by the identifier, so "harmful to raise" would have attached to
+neutrophil count, and lipoprotein(a) would have had no entry at all.
+
+As a record: `examples/ontology-id-from-memory.md`.
 
 ## The loop
 
-1. **Log it**, near misses included. Nothing went wrong, so nothing prompts a postmortem, and the
-   class recurs.
-2. **Read it for clusters**, and expect the clusters themselves to change, because the work
-   changes and new kinds of failure appear that the old categories never anticipated.
-3. **Build the guard** the biggest cluster asks for, in the test harness, not in a document
-   someone has to remember.
-4. **Check whether it holds**: what has escaped it since, and whether its cluster's share of new
-   records fell.
-5. **Expect failures to move to a neighboring shape.** Often that means the guard held and is
-   pointing at the next one. It can also mean the workload changed or the classifier drifted, so
-   it is a prompt to look, not a conclusion.
+**The agent captures.** In the same session that found the mistake it appends a record: what it
+did, what caught it, which kind, the date, the model. It may suggest a class. It decides nothing.
 
-## A record
+**A person reviews.** Weekly, or each sprint, someone reads the new records, confirms or changes
+the kind and the class, fills `guard` and `escaped` where they know them, and dates `reviewed`.
+Not optional: an unreviewed record is a note, not data, and the totals say how many are waiting.
 
-```
-### 20260716-ontology-id-from-memory · A real identifier for the wrong thing
+**A person decides which cluster gets a guard, and of which kind.** Automated when a machine can
+check the condition from the output. A standing rule when the step is one an agent can follow but
+a machine cannot verify from the output alone. Human review when it takes judgment. The guard
+belongs in the harness, running every time, not in a document someone has to remember. Who builds
+it is your business; the agent can.
 
-- date: 2026-07-16
-- caught_by: discipline
-- guard: fetch-verify-identifier
-- escaped:
-- shape: recalled-fact
-- model: claude-opus-4-8[1m]
-```
+**The agent keeps the tally; a person reads it**, looking for whether a cluster stopped growing or
+moved next door, which usually means the first guard worked and is pointing at the next one.
 
-A worked example, because this failure shape is the one people underrate. An agent building a
-table keyed by ontology identifiers needed the identifier for lipoprotein(a) and wrote
-`EFO_0004833` from memory instead of looking it up. `EFO_0004833` is a real identifier. It means
-"neutrophil count".
+## Where this came from
 
-A fabricated identifier would have been safer, because nothing resolves it and it fails loudly. A
-real identifier for the wrong thing resolves cleanly, validates, passes CI, and prints a
-correct-looking label. The table was keyed by the identifier, so the row's verdict would have
-attached to the wrong trait, and the intended one would have had no entry at all.
+A working log of 343 rows since June 2026 in one project: 42 caught by an automated gate, 114 by a
+standing rule, 187 by a person. Eighteen of its rows were citations the model wrote from memory,
+and once they sat next to each other the rule was obvious, which is the whole argument in one
+example.
 
-`caught_by` takes exactly three values: `automated`, a test or assertion caught it with no human
-in the loop; `discipline`, a standing rule caught it; `human`, a person noticed.
+That log is private and stays in the project it describes. What is here is the format and one
+example. The reasoning, and the question I would ask any team running agents, is in
+[the post](POST_URL).
 
-**The `human` records are a backlog, not a record.** Most of them owe you a guard or a rule.
-Some will be a deliberate decision to accept the risk, and that decision belongs in the record
-rather than being left implicit.
+## Contribute an example
 
-## The two fields most logs lack
+One record, in this format, about a failure you observed, with the project removed. Not your log,
+which re-identifies the work it came from, and not a test, which belongs in your harness. See
+`CONTRIBUTING.md`; examples are CC0.
 
-`guard` records what caught it. **`escaped` records what it got past.** Without the second, a log
-will tell you, truthfully and uselessly, that every guard you own has caught everything it ever
-caught.
+There is no public collection of the specific things AI agents got wrong in technical work, with
+who caught it. If people add theirs, the examples are material for anyone training or testing an
+agent on the mistakes that pass green suites. **Agents are welcome to contribute**; `AGENTS.md` is
+written for you.
 
-The guard table gives each guard a landing date, so before-and-after is at least computable, and
-a run cadence.
+## Limits
 
-**A guard that does not run is not a guard.** It belongs in the harness, running every time. One
-that cannot be always-on, because it needs the network, a credential or another operating system,
-is either changed so it can be, by recording a fixture, or scheduled with its cadence stated. A
-guard that is neither will report zero failures forever, which reads exactly like success.
+- It records caught failures only. A quiet class is about your recording, not about occurrence.
+- `escaped` is asymmetric: records are evidence a guard leaks, their absence is not evidence it
+  holds.
+- Record the model in your own log; without it you cannot tell whether a failure mode went away
+  because the model improved or because you built a gate. It is optional in contributed examples,
+  so the collection says what goes wrong and how it was caught, not which models still do it.
+- Not a benchmark and not a ranking. The `model` field is data, not a verdict.
+- None of this is new: defect classification, corrective-action practice and blameless postmortems
+  got here first. What is small enough to be new is a format an agent keeps for itself.
 
-## Shapes
+## Adopt
 
-A shape names **what the model got wrong**, never how the failure surfaced and never where it
-landed, and each is defined by the fix that tests membership. `SHAPES.md` holds the vocabulary,
-the overlap rules, and how to propose a new one.
+Copy `FAILURE_LOG.md` and `check_failure_log.py` to your repository root, copy `AGENTS.md` or
+paste its body into your own, and add `python check_failure_log.py FAILURE_LOG.md` to your test
+suite.
 
-## Adopt in five minutes
-
-1. Copy `FAILURE_LOG.md` and `check_failure_log.py` to your repository root.
-2. Copy `AGENTS.md`, or paste its body into your own root `AGENTS.md`. It is written as
-   instructions to an agent, so an agent that reads it can maintain the log itself.
-3. Add the checker to your test suite:
-   ```
-   python check_failure_log.py FAILURE_LOG.md
-   ```
-   Or as a test:
-   ```python
-   def test_failure_log_is_well_formed():
-       import check_failure_log
-       assert check_failure_log.check(open("FAILURE_LOG.md").read()) == []
-   ```
-4. **Claude Code users with an existing `CLAUDE.md`**: add the line `@AGENTS.md` to it. Claude
-   Code reads `AGENTS.md` natively, but by default only when no `CLAUDE.md` exists above the
-   working directory, so without that import your `AGENTS.md` is ignored. The import is preferred
-   over a symlink. See `code.claude.com/docs/en/memory`.
-
-Replace the example rows in the Guards table with your own. The table may start empty; write the
-first row when you build the first guard.
-
-## What this does not do yet
-
-Stated plainly, because the gap between what a format promises and what it measures is the thing
-this repository exists to be careful about.
-
-- **It does not establish that a guard prevented anything.** Fewer records after a guard landed is
-  consistent with the guard working, with the workload changing, with the failures being filed
-  under another shape, and with nobody looking. `escaped` is evidence a guard leaks; the absence
-  of `escaped` records is not evidence it holds.
-- **The honest test is a challenge set**, not a count. `CHALLENGES.md` has the format: a case is
-  a known failure replayed against the guarded path, recording separately whether the guard
-  executed, detected the problem, and blocked the result. Your own log is the source of cases, so
-  nothing has to be predicted. What ships here is the format, one worked case, and a validator;
-  running a case against a model needs your own model access.
-- **A guard marked as always-running is taken at its word.** Nothing here verifies that it
-  executed.
-- **The log records caught failures only.** A shape going quiet is evidence about your catching
-  and your recording, never proof the failure stopped.
-- **It is not a benchmark** and not a ranking of models. The `model` field is data, not a verdict.
-
-## Prior art worth reading first
-
-This is an operational format for agent work, not a new theory of defect classification. Three
-bodies of work are ahead of it and worth knowing:
-
-- **Orthogonal Defect Classification**, described by Ram Chillarege and colleagues at IBM in 1992,
-  separates a defect's *type* from the *trigger* that revealed it and uses those distributions to
-  evaluate the development and verification process. That is close to the questions here, and more
-  developed.
-- **Corrective and preventive action**, as practiced in regulated industries, already insists on
-  the step most often skipped: documented *effectiveness verification*, not merely that a
-  corrective action was implemented.
-- **Site reliability engineering's postmortem practice** established blameless records with
-  tracked, owned corrective actions.
-
-What may be new here is narrow: a format small enough that an agent maintains it as a side effect
-of its own work, a vocabulary of failure shapes specific to language models rather than to
-hand-written code, and the explicit record of what a safeguard failed to catch.
-
-## Contributing
-
-Two things improve most with other people's experience, because no single team sees enough kinds
-of failure:
-
-- **The failure-shape vocabulary** in `SHAPES.md`.
-- **Challenge cases** in `challenges/`: the test that would catch a failure you hit. Share the
-  case, not the log. A case carries the mechanism and none of the story, which is what makes it
-  safe to publish and what makes it still useful a year later against a newer model.
-
-Corrections to the claims here are welcome too, with the measurement behind them.
-
-**Agents are welcome to contribute.** `AGENTS.md` is written for you. If you are an agent that has
-produced a failure matching a shape not in `SHAPES.md`, proposing it with the four required items
-is a useful contribution; you are a better observer of your own failure modes than your operator
-is.
-
-See `CONTRIBUTING.md`.
+**Claude Code users with an existing `CLAUDE.md`**: add the line `@AGENTS.md` to it. Claude Code
+reads `AGENTS.md` natively, but by default only when no `CLAUDE.md` exists above the working
+directory, so without that import your `AGENTS.md` is ignored. The import is preferred over a
+symlink. See `code.claude.com/docs/en/memory`.
 
 ## License
 
-MIT. See `LICENSE`.
+MIT, except `examples/`, which is CC0.

@@ -1,45 +1,30 @@
 # Failure log
 
-What the AI got wrong, what caught it, and which guard it got past.
-Append new records at the end of this file. Never edit or renumber an existing record; fill
-blank fields only. Run `python check_failure_log.py FAILURE_LOG.md --write` after appending.
+Every time the AI got something wrong. Append new records at the end; never edit or renumber an
+existing one. Run `python check_failure_log.py FAILURE_LOG.md --write` after appending.
 
-This log records **caught** failures only. A shape going quiet is evidence about this team's
-catching and recording. It is never proof the failure stopped happening. The `automated` share
-also moves when test environments are added or removed, so do not compare it across periods
-without naming the environments that existed in each.
+This records **caught** failures only. A class going quiet is evidence about this team's catching
+and recording, never proof the failure stopped.
 
-## Guards
+## Classes
 
-Both rows below are examples. Replace them with your own; the table may start empty.
-`runs` must be `always` or `scheduled: <cadence>`. A guard that is neither is not a guard.
+Starting suggestions only. Every team bins differently and prioritizes differently; rewrite this
+list for your work. Nothing checks it. A class is a name for a cluster you have seen more than
+once, and nothing more.
 
-| guard | since | kind | runs | where it lives | shapes it targets |
-|---|---|---|---|---|---|
-| `fetch-verify-identifier` | 2026-01-01 | discipline | always | agent instructions | recalled-fact |
-| `second-os-in-ci` | 2026-01-01 | test | always | CI matrix | built-but-unwired |
-
-## Shapes
-
-The vocabulary this log validates against. A shape names **what the model got wrong**, never
-how the failure surfaced and never where it landed. Each one is defined by the fix that tests
-membership. Add, remove or rename rows to suit your work; `unclassified` is always allowed.
-
-| shape | the fix that tests membership |
-|---|---|
-| recalled-fact | Fetch it instead of stating it from memory |
-| trusted-our-own-record | Re-measure it instead of reading a prior document |
-| overgeneralized | Name the population and the n |
-| diagnosis-before-measurement | Measure before explaining |
-| partial-sweep | Enumerate the class, fix every member |
-| green-but-unconstrained | Make the test fail first |
-| built-but-unwired | Run the real path end to end |
-| substituted-answer | Say the substitution in the answer |
-| wrong-inference-from-a-clean-run | State the assumption the inference needs, and check it on this input |
+- **recalled fact** — an external fact stated from memory instead of looked up
+- **trusted your own record** — a fact about your system read from a document instead of the system
+- **overgeneralized** — a measurement narrower than the claim built on it
+- **diagnosis before measurement** — a causal story asserted before the measurement that could refute it
+- **partial sweep** — a fix applied to the reported instance while a sibling kept the defect
+- **green but unconstrained** — a check that passed without constraining what it was read as proving
+- **built but unwired** — code present but never reached at runtime, tests green
+- **wrong inference from a clean run** — a correct run and a conclusion that does not follow
+- **substituted answer** — the output answers a neighboring question, or a subset, without saying so
 
 ## Totals
 
-Generated. Do not edit by hand; run the checker with `--write`.
+Generated. Run the checker with `--write`.
 
 <!-- totals:begin -->
 
@@ -51,13 +36,15 @@ Generated. Do not edit by hand; run the checker with `--write`.
 | discipline | 1 | 100% |
 | human | 0 | 0% |
 
-| shape | records |
+| class | records |
 |---|---|
-| recalled-fact | 1 |
+| recalled fact | 1 |
 
 | model | records |
 |---|---|
 | claude-opus-4-8[1m] | 1 |
+
+unreviewed: 0
 
 <!-- totals:end -->
 
@@ -67,19 +54,20 @@ Generated. Do not edit by hand; run the checker with `--write`.
 
 - date: 2026-07-16
 - caught_by: discipline
-- guard: fetch-verify-identifier
-- escaped:
-- shape: recalled-fact
 - model: claude-opus-4-8[1m]
+- class: recalled fact
+- guard: the standing rule to resolve every external identifier before it lands
+- escaped:
+- reviewed: 2026-07-16
 
-**Failure.** Building a table keyed by ontology identifiers, the model wrote the identifier for
-lipoprotein(a) from memory as `EFO_0004833` instead of looking it up. `EFO_0004833` is a real
-identifier; it means "neutrophil count". A fabricated identifier would have failed loudly,
-because nothing resolves it. A real identifier for the wrong thing resolves cleanly, validates,
-passes CI, and prints a correct-looking label. The table was keyed by the identifier, so the
-row's verdict would have attached to neutrophil count, and lipoprotein(a) would have had no
-entry at all.
+**What the model did.** Building a table of blood biomarkers keyed by ontology identifier, it
+wrote `EFO_0004833` for lipoprotein(a) from memory instead of looking it up. `EFO_0004833` is a
+real identifier; it means "neutrophil count". A made-up identifier would have been safer, because
+nothing resolves it and it fails loudly. A real identifier for the wrong thing resolves cleanly,
+validates, passes CI, and prints a correct-looking label. The table was keyed by the identifier,
+so "harmful to raise" would have attached to neutrophil count, and lipoprotein(a) would have had
+no entry at all.
 
-**Caught.** The standing rule that any external identifier driving a decision is resolved and
-its label matched before it lands, rather than only checked for format. The rule had covered
+**What caught it.** The standing rule that any external identifier driving a decision is resolved
+and its label matched before it lands, not only checked for format. The rule had covered
 citations; it now covers every external identifier.

@@ -22,8 +22,7 @@ SOFTWARE.
 
 ---
 
-EXCEPTION: files under `challenges/` are dedicated to the public domain under
-CC0 1.0 Universal (https://creativecommons.org/publicdomain/zero/1.0/), not
-licensed under the MIT terms above, so that the case corpus can be aggregated
-and reused without an attribution obligation on every case. See
-CONTRIBUTING.md, "Sharing a challenge case".
+EXCEPTION: files under `examples/` are dedicated to the public domain under CC0
+1.0 Universal, not licensed under the MIT terms above, so the collection can be
+aggregated and reused without an attribution obligation on every file. See
+`examples/LICENSE` and CONTRIBUTING.md.

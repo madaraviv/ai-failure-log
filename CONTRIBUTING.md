@@ -1,68 +1,55 @@
 # Contributing
 
-## What is wanted
+## An example
 
-- **A new shape**, with the four items in `SHAPES.md`.
-- **A better real example** for an existing shape.
-- **A constructed-failure test** for a check the checker lacks.
-- **A correction** to a claim in the README, with the measurement behind it.
-- **A challenge case**: the test that would catch a failure you hit. See below.
+Send **one record, in the log's format, about a failure you observed, with the project removed.**
+It lives at `examples/<slug>.md`.
 
-## What is not wanted
+Not your log: the story in a log re-identifies the work it came from. Not a test: that belongs in
+your harness. One record, the way the post asks it — one specific thing, and who caught it
+instead.
 
-- A fourth `caught_by` value. Three values are the whole point; a fourth makes the column
-  uncountable, which is how ours drifted to 28 distinct values.
-- A new required field.
-- Renaming a published shape; other people's logs cite it.
-- Vendor-specific hooks, a dashboard, or a web interface.
+The floor:
 
-## Sharing a challenge case
+- The record format, every key present. `caught_by` is one of the three values. `model` if your
+  tooling reports it, blank otherwise, never guessed.
+- **What the model did** names the concrete artifact: the identifier, flag, value or sentence,
+  with the task in one neutral sentence naming the kind of work and never whose. "Got a citation
+  wrong" is not an example; the citation it wrote is.
+- **What caught it** says what exposed it, and where you know it, why it passed unnoticed until
+  then.
+- Under 150 words. No names, handles, hostnames, paths, tickets, customer or project names, or
+  identifiers from restricted data. If the artifact alone would identify your programme,
+  generalize it or do not send it. Dates to the month if you prefer.
+- It really happened. `python check_failure_log.py examples/<slug>.md --scrub-check` is clean. A
+  second person on your side read it.
 
-**Share the case that would catch your failure, not the log that recorded it.** A case is a
-minimal input and an expected behavior; the narrative is removed. See `CHALLENGES.md` for the
-format and `challenges/` for a worked example.
+Checklist for the pull request:
 
-This is deliberate, and it is a change from an earlier plan to accept whole logs. A log is written
-for colleagues by people who knew the names, and scrubbing it is harder than it looks: a
-combination of dates, model versions and project details can identify an unpublished programme
-without containing a single name. Aviation and healthcare reporting systems use trained
-de-identification for exactly this reason, and generalize or remove contextual identifiers rather
-than trusting a pattern match. We are not set up to do that, so we do not ask you to try.
+- [ ] The format checks clean and the scrub check is clean.
+- [ ] The task sentence names the kind of work, not whose.
+- [ ] Nothing confidential, and a second reader confirmed it.
+- [ ] It really happened; it is not constructed to illustrate a point.
+- [ ] I agree to the terms below. If I contribute for an employer, they have agreed.
 
-A case avoids the problem by construction. It carries the mechanism and none of the story, and it
-is worth more than a log entry anyway, because you can run it again next quarter against a newer
-model.
+**What you agree to.** You are placing the file in the public domain under CC0. Anyone may copy
+it, change it, combine it with others, and use it for any purpose, including training and
+evaluating AI systems, without asking you and without crediting you. You confirm you have the
+right to share it, that it contains nothing confidential and no one's personal data, and that it
+describes something that really happened. Once merged this cannot be undone; we will remove a file
+if you ask, but copies and git history persist.
 
-**You do not need to predict anything.** Your own log is the source of cases: every record is a
-failure you already observed, so a case is that same request replayed. A case that failed before
-your guard landed and still fails afterwards tells you the guard did not hold for it.
+## A class
 
-### What we accept
+A class you have seen more than once: a one-line addition to the list in `FAILURE_LOG.md`, plus
+one example carrying it. That is how the list grows. When several examples share a class nobody
+named, it gets added as another suggestion.
 
-- The case validates: `python run_challenges.py challenges/`.
-- It names one guard and one shape, and lives under `challenges/<guard-id>/`.
-- A `discipline` case has a `runs:` count of at least two, because the behavior is not
-  deterministic and one run measures nothing.
-- **The "why this baits it" paragraph explains the mechanism.** A bait whose difficulty nobody can
-  explain usually is not difficult. This is the field we read hardest.
-- Nothing confidential: no names, hostnames, customer or project names, ticket references, paths
-  with usernames, or identifiers from restricted-access data. Run
-  `python check_failure_log.py <file> --scrub-check` over it as a backstop, remembering that it
-  finds shapes and cannot tell that a sentence describes a customer without naming them.
-- It describes a real failure you observed. Invented cases are not useful and we cannot verify
-  them, so the sign-off asserts it.
+## A correction
 
-### What you agree to by sharing a case
+Any claim here, with the measurement behind it.
 
-You are placing it in the public domain under CC0. Anyone may copy it, change it, combine it with
-others, and use it for any purpose, including training and evaluating AI systems, without asking
-you and without crediting you. You confirm you have the right to share it, that it contains
-nothing confidential and no one's personal data, and that it describes something that really
-happened. Once merged this cannot be undone; we will remove a file if you ask, but copies and git
-history will persist. If you are contributing for an employer, confirm they have agreed.
+## Not wanted
 
-### Reviewing a case
-
-Validate it. Read it for meaning-level detail no pattern match can see. Check that the bait's
-mechanism is explained rather than asserted. Confirm the guard and shape exist, or that the pull
-request adds them properly.
+A fourth `caught_by` value. A new required field. Anything about building guards; that is your
+harness and your business.
