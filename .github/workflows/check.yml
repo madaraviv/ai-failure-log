@@ -18,7 +18,7 @@ jobs:
           for f in shared-logs/*/FAILURE_LOG.md; do
             found=1
             echo "::group::$f"
-            python check_failure_log.py "$f"
+            python check_failure_log.py "$f" --contribution
             python check_failure_log.py "$f" --scrub-check
             echo "::endgroup::"
           done

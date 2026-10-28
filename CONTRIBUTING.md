@@ -21,9 +21,10 @@
 You can share your own failure log under `shared-logs/<your-org-or-handle>/FAILURE_LOG.md`, in
 the same format as the template, dedicated to the public domain under CC0.
 
-**Why share one.** Nobody has a public collection of AI failures in technical work annotated with
-what caught them. If more than one team shares theirs, three things become possible that one team
-cannot do alone: a shape vocabulary grounded in several teams' experience rather than one;
+**Why share one.** Public collections of AI incidents exist, the AI Incident Database among them,
+and they catalogue harms and public events. What is harder to find is the day-to-day material:
+technical near misses, annotated with the mechanism that caught each one. If more than one team
+shares that, three things become possible that one team cannot do alone: a shape vocabulary grounded in several teams' experience rather than one;
 base rates, such as whether a person catching more than half of all failures is typical or just
 us; and an evaluation set, because a record naming the concrete failing artifact is the seed of a
 test asking whether an agent still makes that mistake and whether anything catches it. Guards

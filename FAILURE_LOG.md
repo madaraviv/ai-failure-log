@@ -35,6 +35,7 @@ membership. Add, remove or rename rows to suit your work; `unclassified` is alwa
 | green-but-unconstrained | Make the test fail first |
 | built-but-unwired | Run the real path end to end |
 | substituted-answer | Say the substitution in the answer |
+| wrong-inference-from-a-clean-run | State the assumption the inference needs, and check it on this input |
 
 ## Totals
 

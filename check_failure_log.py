@@ -4,6 +4,7 @@
     python check_failure_log.py FAILURE_LOG.md           # check only; exit 1 on a problem
     python check_failure_log.py FAILURE_LOG.md --write   # rewrite the totals block, then check
     python check_failure_log.py FAILURE_LOG.md --scrub-check --denylist my-names.txt
+    python check_failure_log.py FAILURE_LOG.md --contribution   # the shared-log acceptance floor
 
 Standard library only. Wire the check form into your test suite so a stale total or a
 bad value goes red at the same moment as any other failing test.
@@ -25,6 +26,11 @@ FIELD = re.compile(r"^- (?P<key>[a-z_]+):\s*(?P<value>.*)$")
 # a table row whose first cell is an identifier, back-ticked or not
 TABLE_ROW = re.compile(r"^\|(?P<cells>.+)\|\s*$")
 REQUIRED = ("date", "caught_by", "guard", "shape", "model")
+# the key must be present; an empty value is meaningful and allowed
+MAY_BE_EMPTY = ("model", "escaped")
+# the acceptance floor for a log contributed under shared-logs/, from CONTRIBUTING.md
+MIN_SHARED_RECORDS = 10
+MAX_SHARED_UNCLASSIFIED = 0.25
 BEGIN, END = "<!-- totals:begin -->", "<!-- totals:end -->"
 
 # --scrub-check. HARD findings exit 1: these have a shape no public log should carry.
@@ -164,10 +170,10 @@ def check(text):
         rid = r["id"]
         if not RECORD_ID.match(rid):
             problems.append(f"{rid}: id must look like 20260716-short-slug (date, then a slug)")
-        for key in REQUIRED:
+        for key in REQUIRED + ("escaped",):
             if key not in r:
                 problems.append(f"{rid}: missing required field {key!r}")
-            elif key != "model" and not r[key]:
+            elif key not in MAY_BE_EMPTY and not r[key]:
                 problems.append(f"{rid}: field {key!r} is empty")
         for para in ("Failure", "Caught"):
             if para not in r["paragraphs"]:
@@ -206,6 +212,31 @@ def check(text):
         problems.append(f"no totals block: add {BEGIN} and {END} above the log")
     elif text[start:end + len(END)].strip() != want.strip():
         problems.append("the totals block does not match the records; rerun with --write")
+    return problems
+
+
+def contribution_floor(text):
+    """The extra bar a log must clear to be accepted under shared-logs/. See CONTRIBUTING.md."""
+    records, _, _, _ = parse(text)
+    problems = []
+    n = len(records)
+    if n < MIN_SHARED_RECORDS:
+        problems.append(
+            f"{n} record(s); a shared log needs at least {MIN_SHARED_RECORDS}. "
+            "Below that it is an anecdote rather than a log"
+        )
+    unc = sum(1 for r in records if r.get("shape") == "unclassified")
+    if n and unc / n > MAX_SHARED_UNCLASSIFIED:
+        problems.append(
+            f"{unc} of {n} records are 'unclassified' "
+            f"({100 * unc / n:.0f}%); the limit for a shared log is "
+            f"{MAX_SHARED_UNCLASSIFIED:.0%}. Classify them, or propose the shapes they need"
+        )
+    if "license: CC0-1.0" not in text:
+        problems.append(
+            "no 'license: CC0-1.0' line in the header; a shared log carries it explicitly. "
+            "See 'What you agree to by sharing a log here' in CONTRIBUTING.md"
+        )
     return problems
 
 
@@ -248,6 +279,8 @@ def main(argv):
         open(path, "w", encoding="utf-8").write(text)
         print(f"{path}: totals rewritten for {len(records)} record(s)")
     problems = check(text)
+    if "--contribution" in argv[1:]:
+        problems += contribution_floor(text)
     for p in problems:
         print(f"{path}: {p}")
     print(f"{path}: {'OK' if not problems else f'{len(problems)} problem(s)'}")

@@ -39,16 +39,24 @@ Then run `python check_failure_log.py FAILURE_LOG.md --write`.
 
 - **`caught_by` takes exactly one of three values**, with nothing else in the cell.
   `automated` means a test or assertion caught it with no human in the loop. `discipline` means
-  a standing rule caught it. `human` means a person noticed and a safeguard was added
-  afterward. Do not write `human (added a test)`; name the safeguard in `guard`. Once this cell
-  holds free text it stops being countable, which is the one thing it is for.
+  a standing rule caught it. `human` means a person noticed; whether a safeguard followed is
+  recorded in `guard`, which is `none-yet` until one does. Do not write `human (added a test)`;
+  name the safeguard in `guard`. Once this cell holds free text it stops being countable, which
+  is the one thing it is for.
 - **`guard`** is what caught it, or `none-yet` when nothing did. A `human` record with
-  `none-yet` is a backlog item: it owes this repository a guard or a rule.
-- **`escaped`** is what the failure got past. `guard` records successes; without `escaped` the
-  log can never show whether a guard works.
+  `none-yet` is a backlog item: it most likely owes this repository a guard or a rule. Some are
+  instead a deliberate decision to accept the risk; write that decision into the **Caught.**
+  paragraph rather than leaving it implicit, so a reader can tell an accepted risk from an
+  unfinished one.
+- **`escaped`** is what the failure got past, and the key is always present even when the value
+  is empty, because a blank you can see is different from a field nobody filled in. `guard`
+  records successes; without `escaped` the log can never show that a guard leaks. Note the
+  asymmetry: `escaped` records are evidence a guard leaks, while no `escaped` records are not
+  evidence it holds.
 - **`model`** is recorded exactly as the tooling reports it. Never guess it. A blank field is
   correct when the tooling does not report it; an invented value is worse than a blank one.
-- **`shape`** must appear in the Shapes table of `FAILURE_LOG.md` or be `unclassified`.
+- **`shape`** must appear in the Shapes table of `FAILURE_LOG.md` or be `unclassified`. When two
+  shapes both seem to fit, `SHAPES.md` has the tie-break rules; do not invent a combined shape.
 - **Ids are permanent.** `YYYYMMDD-short-slug`, unique forever, never renumbered, because other
   text cites them.
 
