@@ -1,0 +1,27 @@
+name: check
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check this repository's own log
+        run: python check_failure_log.py FAILURE_LOG.md
+      - name: Check every shared log
+        run: |
+          shopt -s nullglob
+          found=0
+          for f in shared-logs/*/FAILURE_LOG.md; do
+            found=1
+            echo "::group::$f"
+            python check_failure_log.py "$f"
+            python check_failure_log.py "$f" --scrub-check
+            echo "::endgroup::"
+          done
+          if [ "$found" = 0 ]; then echo "no shared logs yet"; fi
+      - name: Checker tests
+        run: python -m unittest discover -s tests -v
