@@ -6,7 +6,9 @@ effect of its own work, and one worked example.
 
 The point is not the log. It is that once the mistakes sit next to each other you stop fixing
 instances and start fixing classes, and each class tells you which kind of guard to build next.
-The log is kept by an agent and read by a person. Neither half works alone.
+That takes two passes: capture, as the work happens, and review, later, with the whole
+accumulation in view. Neither half works alone. Who does each is your choice; both can be an
+agent.
 
 ## The record
 
@@ -19,7 +21,7 @@ The log is kept by an agent and read by a person. Neither half works alone.
 - class: <a class from the list in the template, your own, or unclassified>
 - guard: <free text: which guard caught it; may be empty>
 - escaped: <free text: which guard should have caught it and did not; may be empty>
-- reviewed: <a person fills this>
+- reviewed: <the reviewer fills this>
 
 **What the model did.** The concrete artifact: the actual identifier, flag, value or sentence.
 
@@ -54,21 +56,26 @@ As a record: `examples/ontology-id-from-memory.md`.
 
 ## The loop
 
-**The agent captures.** In the same session that found the mistake it appends a record: what it
-did, what caught it, which kind, the date, the model. It may suggest a class. It decides nothing.
+**Capture**, in the same session that found the mistake. Append a record: what the model did,
+what caught it, which kind, the date, the model. Suggest a class. Decide nothing. This is the
+working agent's half, and `AGENTS.md` is written for it.
 
-**A person reviews.** Weekly, or each sprint, someone reads the new records, confirms or changes
-the kind and the class, fills `guard` and `escaped` where they know them, and dates `reviewed`.
-Not optional: an unreviewed record is a note, not data, and the totals say how many are waiting.
+**Review**, weekly or each sprint, with the accumulation in view. Read the new records, confirm or
+change the kind and the class, fill `guard` and `escaped` where you know them, and date
+`reviewed`. Not optional: an unreviewed record is a note, not data, and the totals say how many
+are waiting.
 
-**A person decides which cluster gets a guard, and of which kind.** Automated when a machine can
-check the condition from the output. A standing rule when the step is one an agent can follow but
-a machine cannot verify from the output alone. Human review when it takes judgment. The guard
-belongs in the harness, running every time, not in a document someone has to remember. Who builds
-it is your business; the agent can.
+**Decide which cluster gets a guard, and of which kind.** Automated when a machine can check the
+condition from the output. A standing rule when the step is one an agent can follow but a machine
+cannot verify from the output alone. Review by a reader when it takes judgment. The guard belongs
+in the harness, running every time, not in a document someone has to remember.
 
-**The agent keeps the tally; a person reads it**, looking for whether a cluster stopped growing or
-moved next door, which usually means the first guard worked and is pointing at the next one.
+**Then read the tally**, looking for whether a cluster stopped growing or moved next door, which
+usually means the first guard worked and is pointing at the next one.
+
+**The reviewer can be a person or another agent.** What matters is that review is a separate pass
+from capture, by someone or something looking at the whole log rather than at the one mistake just
+made. A record reviewed in the same breath as it was written has not been reviewed.
 
 ## Where this came from
 

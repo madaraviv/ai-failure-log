@@ -26,7 +26,7 @@ Append to the end of `FAILURE_LOG.md`:
 - class: <a class from the list above, your own, or unclassified>
 - guard: <free text: which guard caught it; may be empty>
 - escaped: <free text: which guard should have caught it and did not; may be empty>
-- reviewed: <blank; a person fills this>
+- reviewed: <blank; the reviewer fills this>
 
 **What the model did.** The concrete artifact: the actual identifier, flag, value or sentence.
 "Got a citation wrong" is not a record; the identifier it wrote is.
@@ -50,7 +50,12 @@ Then run `python check_failure_log.py FAILURE_LOG.md --write`.
   more often evidence nobody wrote them.
 - **Ids are permanent.** `YYYYMMDD-short-slug`, unique forever, never renumbered.
 
-## What you do not do
+## Capturing is not reviewing
 
-You do not fill `reviewed`, change another record's class, or decide what gets a guard. Those are
-the person's half of the loop. Your half is capturing accurately and not deciding.
+While you are capturing, you do not fill `reviewed`, change another record's class, or decide what
+gets a guard. Those belong to the review pass, which happens later with the whole log in view.
+Your job here is to record accurately and decide nothing.
+
+You may be asked to do the review pass as a separate task, and that is a legitimate use of an
+agent. If so, read every unreviewed record together rather than one at a time, and say what you
+changed. A record reviewed in the same breath as it was written has not been reviewed.
