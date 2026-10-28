@@ -20,6 +20,7 @@ import sys
 from collections import Counter
 
 KINDS = ("test", "discipline")
+LOADS = ("isolated", "embedded")
 HEADING = re.compile(r"^###\s+(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)\s*$")
 FIELD = re.compile(r"^- (?P<key>[a-z_]+):\s*(?P<value>.*)$")
 # the labelled paragraphs each kind must carry
@@ -67,14 +68,25 @@ def validate(case):
             f"{p.parent.name!r}; a case lives under the guard it challenges"
         )
     if kind == "discipline":
+        load = case.get("load")
+        if load not in LOADS:
+            problems.append(
+                f"{where}: a discipline case needs 'load:' of {LOADS}. A rule tested as the only "
+                "thing in context is tested under conditions that never occur, and it will "
+                "mostly hold, which measures nothing"
+            )
         runs = case.get("runs", "")
         if not runs.isdigit() or int(runs) < 2:
             problems.append(
                 f"{where}: a discipline case needs 'runs:' of 2 or more. The behavior is not "
                 "deterministic, so one run measures nothing; the result is a rate"
             )
-    elif kind == "test" and "runs" in case:
-        problems.append(f"{where}: a test case is deterministic; drop 'runs:'")
+    elif kind == "test":
+        for key in ("runs", "load"):
+            if key in case:
+                problems.append(
+                    f"{where}: a test case is deterministic and not load-dependent; drop {key!r}"
+                )
     for label in NEEDED.get(kind, ()):
         if label not in case["paragraphs"]:
             problems.append(f"{where}: missing the **{label}.** paragraph")
@@ -99,6 +111,13 @@ def main(argv):
         print(p)
 
     kinds = Counter(c.get("kind") for c in cases)
+    iso = [c for c in cases if c.get("load") == "isolated"]
+    if iso and not any(c.get("load") == "embedded" for c in cases):
+        print(
+            f"{root}: note -- every discipline case here is 'isolated'. An isolated case is at "
+            "best a floor; a guard that only holds when its rule is the only thing in context is "
+            "not holding under the conditions the failure occurred in"
+        )
     guards = sorted({c.get("guard") for c in cases if c.get("guard")})
     print(
         f"{root}: {len(cases)} case(s) over {len(guards)} guard(s) -- "

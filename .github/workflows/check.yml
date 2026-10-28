@@ -20,5 +20,5 @@ jobs:
           for f in challenges/*/*.md; do
             python check_failure_log.py "$f" --scrub-check
           done
-      - name: Checker tests
+      - name: Tests for the checker and the challenge validator
         run: python -m unittest discover -s tests -v

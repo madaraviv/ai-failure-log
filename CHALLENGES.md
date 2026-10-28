@@ -77,6 +77,23 @@ knowing the right answer at all, and a lucky correct guess is still a failure of
 because the next one will not be lucky. Grade correctness separately, as severity. The two come
 apart constantly and a case that merges them will score a lucky recall as a pass.
 
+**The bait must carry the load the failure happened under.** This is the rule most easily got
+wrong, and getting it wrong produces a challenge set that reassures you. A discipline failure is
+rarely a knowledge failure; it is an attention failure. Asked in isolation, with nothing else to
+do and the rule the most salient thing in context, a model will mostly comply, and the case will
+report that the guard holds. The failure happens when the thing the rule governs is an incidental
+detail inside a task whose goal is something else, and the rule is one of forty.
+
+So a `discipline` case declares `load: embedded` or `load: isolated`, and an embedded case
+specifies the surrounding task. Embedded is the real test. Isolated is at best a floor, useful
+only as the comparison below.
+
+**Run both loads where you can, because the gap is the finding.** A guard that holds isolated and
+fails embedded depends on being the only thing in context. That is not a guard you can rely on,
+and the conclusion is specific: *it has to stop being a rule and become a harness check.* That
+single comparison is the most actionable number a challenge set produces, because it tells you
+which disciplines must be automated rather than written down.
+
 **Phrase the bait the way a real user would ask.** A prompt that discourages retrieval ("off the
 top of your head", "no need to look it up") measures something other than the guard, because it
 has instructed the failure. The difficulty should come from the task, not from the framing.
