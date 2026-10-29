@@ -27,6 +27,7 @@ Append to the end of `FAILURE_LOG.md`:
 - guard: <free text: which guard caught it; may be empty>
 - escaped: <free text: which guard should have caught it and did not; may be empty>
 - reviewed: <blank; the reviewer fills this>
+- context: <optional: .failure-contexts/<record-id>/ sha256:<hash of the saved copy>>
 
 **What the model did.** The concrete artifact: the actual identifier, flag, value or sentence.
 "Got a citation wrong" is not a record; the identifier it wrote is.
@@ -48,6 +49,11 @@ Then run `python check_failure_log.py FAILURE_LOG.md --write`.
 - **`guard` and `escaped`** are phrases, never validated. A record saying a failure got past a
   guard is evidence that guard leaks. The absence of such records is not evidence it holds; it is
   more often evidence nobody wrote them.
+- **`context`** is optional: the relative path under `.failure-contexts/<record-id>/` where you
+  copied the session, truncated at the failing turn, and `sha256:` of the copy. Never the
+  transcript, never an absolute path, a URL, or a session id. It records where the copy was saved
+  on the machine that saved it; a path that no longer resolves is normal, and the hash is what
+  still identifies the copy.
 - **Ids are permanent.** `YYYYMMDD-short-slug`, unique forever, never renumbered.
 
 ## Capturing is not reviewing

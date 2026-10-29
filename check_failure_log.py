@@ -16,6 +16,7 @@ It does not check your class names. Those are yours.
 """
 from __future__ import annotations
 
+import os
 import re
 import sys
 from collections import Counter
@@ -28,6 +29,9 @@ REC_ID = re.compile(r"^\d{8}-[a-z0-9]+(?:-[a-z0-9]+)*$")
 HEADING = re.compile(r"^###\s+(?P<id>[^\s·|]+)")
 FIELD = re.compile(r"^- (?P<key>[a-z_]+):\s*(?P<value>.*)$")
 BEGIN, END = "<!-- totals:begin -->", "<!-- totals:end -->"
+# where a saved session goes. The format names the directory, not what you put in it.
+STORE = ".failure-contexts"
+CONTEXT = re.compile(r"^\.failure-contexts/\S+?/?(?:\s+sha256:[0-9a-f]{64})?$")
 # things that should not be in a published record. Shapes only; a pattern cannot tell
 # that a sentence describes a customer without naming them, so a person still reads it.
 LEAKS = [
@@ -105,6 +109,11 @@ def check(text):
                 problems.append(f"{rid}: {key} {r[key]!r} is not ISO (YYYY-MM-DD)")
         if r.get("date") and DATE.match(r["date"]) and not rid.startswith(r["date"].replace("-", "")):
             problems.append(f"{rid}: id does not start with its own date ({r['date']})")
+        if r.get("context") and not CONTEXT.match(r["context"]):
+            problems.append(
+                f"{rid}: context must be a relative path under {STORE}/, optionally followed by "
+                "sha256:<64 hex>; never an absolute path, a URL, a session id, or the transcript"
+            )
         if r.get("caught_by") and r["caught_by"] not in CAUGHT_BY:
             problems.append(
                 f"{rid}: caught_by is {r['caught_by']!r}; it is exactly one of {CAUGHT_BY} with "
@@ -121,9 +130,33 @@ def check(text):
 
 
 def scrub(text):
+    # a context line's sha256 would otherwise trip the credential-shaped pattern
     return [f"line {n}: {why} -- {m.group(0)[:60]!r}"
             for n, line in enumerate(text.splitlines(), 1)
+            if not line.startswith("- context:")
             for why, pat in LEAKS for m in pat.finditer(line)]
+
+
+def check_store(path):
+    """If a context store sits beside the log, git must be ignoring it.
+
+    An adopter copies the log and this script, not a .gitignore, so without this the
+    first commit after they start saving contexts publishes them.
+    """
+    here = os.path.dirname(os.path.abspath(path))
+    if not os.path.isdir(os.path.join(here, STORE)):
+        return []
+    ignore = os.path.join(here, ".gitignore")
+    try:
+        with open(ignore, encoding="utf-8") as fh:
+            if any(ln.strip().rstrip("/") == STORE for ln in fh):
+                return []
+    except OSError:
+        pass
+    return [
+        f"{STORE}/ exists here and is not in .gitignore beside it. Add a line reading "
+        f"{STORE}/ before your next commit, or you will publish saved sessions"
+    ]
 
 
 def main(argv):
@@ -147,7 +180,7 @@ def main(argv):
         text = text[:start] + totals(parse(text)) + text[end + len(END):]
         open(path, "w", encoding="utf-8").write(text)
         print(f"{path}: totals rewritten")
-    problems = check(text)
+    problems = check(text) + check_store(path)
     for p in problems:
         print(f"{path}: {p}")
     print(f"{path}: {'OK' if not problems else f'{len(problems)} problem(s)'}")

@@ -134,6 +134,69 @@ class TheCommandLine(unittest.TestCase):
         self.assertEqual(c.main([str(self.path), "--scrub-check"]), 1)
 
 
+class TheContextFieldIsShapeChecked(unittest.TestCase):
+    """It holds a relative path and a hash. Never a transcript, never an absolute path."""
+
+    GOODS = [
+        "- context:",
+        "- context: .failure-contexts/20260716-ontology-id-from-memory/",
+        "- context: .failure-contexts/20260716-ontology-id-from-memory/ sha256:" + "a1" * 32,
+    ]
+    BADS = [
+        "- context: /Users/someone/.failure-contexts/x/",          # absolute: discloses the user
+        "- context: https://example.com/dumps/x.jsonl",            # a URL
+        "- context: 3lqvno0nvdhhnggphfbov33388",                   # a session id
+        '- context: {"type":"user","message":"..."}',              # the transcript itself
+        "- context: .failure-contexts/x/ sha256:tooshort",          # malformed hash
+    ]
+
+    def test_the_accepted_shapes_pass(self):
+        for good in self.GOODS:
+            with self.subTest(value=good):
+                self.assertEqual(without_totals(mutate("- context:", good)), [])
+
+    def test_every_rejected_shape_fires(self):
+        for bad in self.BADS:
+            with self.subTest(value=bad):
+                found = c.check(mutate("- context:", bad))
+                self.assertTrue(any("context must be a relative path" in p for p in found),
+                                f"{bad!r} was accepted: {found}")
+
+    def test_a_hash_on_the_context_line_does_not_trip_the_scrub(self):
+        line = "- context: .failure-contexts/x/ sha256:" + "ab" * 32
+        self.assertEqual(c.scrub(line), [], "the credential pattern flagged a context hash")
+        self.assertTrue(c.scrub("token " + "ab" * 32), "it should still flag one elsewhere")
+
+
+class TheGitignoreGateFires(unittest.TestCase):
+    """An adopter copies two files, not a .gitignore, so this is the only mechanical stop."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.log = pathlib.Path(self.dir) / "FAILURE_LOG.md"
+        shutil.copy(ROOT / "FAILURE_LOG.md", self.log)
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def test_no_store_means_nothing_to_check(self):
+        self.assertEqual(c.check_store(str(self.log)), [])
+
+    def test_a_store_with_no_gitignore_fires(self):
+        (pathlib.Path(self.dir) / ".failure-contexts").mkdir()
+        found = c.check_store(str(self.log))
+        self.assertTrue(any("not in .gitignore" in p for p in found), found)
+
+    def test_a_store_that_is_ignored_passes(self):
+        (pathlib.Path(self.dir) / ".failure-contexts").mkdir()
+        (pathlib.Path(self.dir) / ".gitignore").write_text(".failure-contexts/\n")
+        self.assertEqual(c.check_store(str(self.log)), [])
+
+    def test_this_repo_ignores_its_own_store(self):
+        ignore = (ROOT / ".gitignore").read_text()
+        self.assertIn(".failure-contexts/", ignore)
+
+
 class TheScrubCheckFires(unittest.TestCase):
     def test_it_finds_what_should_not_be_published(self):
         text = ("mail a@b.com, host 10.0.0.4, path /Users/someone/x, s3://bucket/key, "

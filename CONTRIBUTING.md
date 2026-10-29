@@ -21,6 +21,8 @@ The floor:
 - The two paragraphs together under 150 words. No names, handles, hostnames, paths, tickets, customer or project names, or
   identifiers from restricted data. If the artifact alone would identify your programme,
   generalize it or do not send it. Dates to the month if you prefer.
+- `context` blank, or a relative path under `.failure-contexts/` with its hash; the reviewer
+  cannot open it either way. Never a transcript or an excerpt of one.
 - It really happened. `python check_failure_log.py examples/<slug>.md --scrub-check` is clean. A
   second person on your side read it.
 

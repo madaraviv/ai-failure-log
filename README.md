@@ -22,6 +22,7 @@ agent.
 - guard: <free text: which guard caught it; may be empty>
 - escaped: <free text: which guard should have caught it and did not; may be empty>
 - reviewed: <the reviewer fills this>
+- context: <optional: .failure-contexts/<record-id>/ sha256:<hash of the saved copy>>
 
 **What the model did.** The concrete artifact: the actual identifier, flag, value or sentence.
 
@@ -29,6 +30,10 @@ agent.
 ```
 
 Six of those lines are the ones described in the post; `class` and `reviewed` are additions.
+
+`context` records where the session that produced the failure was saved and the hash of that
+copy, so the failure can be replayed later and a lost copy is distinguishable from one never
+taken. It is a path and a hash, never the transcript, and the location is gitignored.
 
 `caught_by` takes three values. **automated**: a test or an assertion caught it. **discipline**: a
 standing rule, in agent memory or a skill, caught it. **human**: a person noticed, and the
@@ -61,7 +66,10 @@ As a record: `examples/ontology-id-from-memory.md`.
 
 **Capture**, in the same session that found the mistake. Append a record: what the model did,
 what caught it, which kind, the date, the model. Suggest a class. Decide nothing. This is the
-working agent's half, and `AGENTS.md` is written for it.
+working agent's half, and `AGENTS.md` is written for it. If your tooling keeps a transcript, copy
+it now, truncated at the failing turn, into `.failure-contexts/<record-id>/`, hash it, and write
+both in `context`. A summary cannot be replayed; the context can, if you kept it, and the decision
+to replay comes long after the only moment it can be saved.
 
 **Review**, weekly or each sprint, with the accumulation in view, by a person or by an agent
 given that task. Read the new records, confirm or change the kind and the class, fill `guard` and
@@ -81,9 +89,9 @@ usually means the first guard worked and is pointing at the next one.
 ## Where this came from
 
 A working log of 343 rows since June 2026 in one project: 42 caught by an automated gate, 114 by a
-standing rule, 187 by a person. Eighteen of its rows were citations the model wrote from memory,
-and once they sat next to each other the rule was obvious, which is the whole argument in one
-example.
+standing rule, 187 by a person. Eighteen of its rows sat in one category, twelve of them paper
+citations that were wrong or unverified, and once they sat next to each other the rule was
+obvious, which is the whole argument in one example.
 
 That log is private and stays in the project it describes. What is here is the format and one
 example.
@@ -117,7 +125,8 @@ written for you.
 Copy `FAILURE_LOG.md` and `check_failure_log.py` to your repository root, copy `AGENTS.md` or
 paste its body into your own, and add `python check_failure_log.py FAILURE_LOG.md` to your test
 suite. Then delete the example record, rewrite the class list for your work, and run the checker
-with `--write`.
+with `--write`. Add `.failure-contexts/` to your `.gitignore`; the checker tells you if the
+directory exists and you forgot.
 
 Python 3.8 or later, no dependencies.
 
